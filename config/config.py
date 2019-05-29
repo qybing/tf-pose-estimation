@@ -4,3 +4,5 @@ VIDEO_NAME = {
     # 'video_name_3': './etcs/test3.mp4',
 }
 IMAGE_NAME = "./images/timg.jpg"
+IP_PORT = "10.10.1.9:9092"
+TOPIC = "TOPIC_IMAGE_PERSON_RECON"
