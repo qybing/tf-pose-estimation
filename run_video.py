@@ -51,4 +51,4 @@ if __name__ == '__main__':
             break
 
     cv2.destroyAllWindows()
-logger.debug('finished1+')
+logger.debug('finished22+')
