@@ -1,9 +1,9 @@
 ## 人体姿态识别
-### windows 下
+### windows
 ```bash
 $ git clone https://www.github.com/ildoonet/tf-pose-estimation
 $ cd tf-openpose
-$ python setup.py install
+$ python3 setup.py install
 ```
 配置视频流源
 ```bash
