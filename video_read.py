@@ -8,7 +8,7 @@ import tensorflow as tf
 import cv2
 from kafka import KafkaProducer
 
-from config.config import VIDEO_NAME
+from config.config import VIDEO_NAME, IP_PORT, TOPIC
 from tf_pose.estimator import TfPoseEstimator
 from tf_pose.networks import get_graph_path, model_wh
 
@@ -24,7 +24,7 @@ file_log.setFormatter(formatter)
 ch.setFormatter(formatter)
 logger.addHandler(ch)
 logger.addHandler(file_log)
-producer = KafkaProducer(bootstrap_servers='10.10.1.9:9092')
+producer = KafkaProducer(bootstrap_servers=IP_PORT)
 fps_time = 100
 
 
@@ -38,7 +38,7 @@ def save_to_kafka(now, person_num, is_fall, url):
         "isFall": is_fall
     }
     msg = json.dumps(msg).encode('utf-8')
-    future = producer.send('TOPIC_IMAGE_PERSON_RECON', key=b'Pose', value=msg, partition=0)
+    future = producer.send(TOPIC, key=b'Pose', value=msg, partition=0)
     result = future.get(timeout=6)
     logger.debug(result)
     # producer.close()
