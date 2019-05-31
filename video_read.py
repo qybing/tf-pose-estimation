@@ -8,7 +8,8 @@ import tensorflow as tf
 import cv2
 from kafka import KafkaProducer
 
-from config.config import VIDEO_NAME, IP_PORT, TOPIC
+from config.config import VIDEO_NAME, IP_PORT, TOPIC, KEY, PARTITION, KAFKA_ON, CPU_ON, EVERY_CODE_CPU, TIMES, \
+    DOCKER_ID, PROCESS_NUM, ENVIRO
 from tf_pose.estimator import TfPoseEstimator
 from tf_pose.networks import get_graph_path, model_wh
 
@@ -24,27 +25,24 @@ file_log.setFormatter(formatter)
 ch.setFormatter(formatter)
 logger.addHandler(ch)
 logger.addHandler(file_log)
-producer = KafkaProducer(bootstrap_servers=IP_PORT)
-fps_time = 100
 
 
-def save_to_kafka(now, person_num, is_fall, url):
+def save_to_kafka(now, person_num, is_fall, url, producer):
     msg = {
-        "equipCode": 1,    # 摄像头编号
-        "staffChangeTime": now,   # 人员识别时间
+        "equipCode": 1,  # 摄像头编号
+        "staffChangeTime": now,  # 人员识别时间
         "staffNum": person_num,  # 人员检测（数量）
-        "videoUrl": url,        # 采集流url
-        'apISource': '1',       # 模块识别码
+        "videoUrl": url,  # 采集流url
+        'apISource': '1',  # 模块识别码
         "isFall": is_fall
     }
     msg = json.dumps(msg).encode('utf-8')
-    future = producer.send(TOPIC, key=b'Pose', value=msg, partition=0)
+    future = producer.send(TOPIC, key=KEY.encode('utf-8'), value=msg, partition=PARTITION)
     result = future.get(timeout=6)
     logger.debug(result)
-    # producer.close()
 
 
-def main(name, path):
+def main(path, producer):
     parser = argparse.ArgumentParser(description='tf-pose-estimation realtime webcam')
     parser.add_argument('--camera', type=int, default=0)
     parser.add_argument('--resize', type=str, default='0x0',
@@ -58,63 +56,65 @@ def main(name, path):
     args = parser.parse_args()
     logger.debug('initialization %s : %s' % (args.model, get_graph_path(args.model)))
     w, h = model_wh(args.resize)
-
-    config = tf.ConfigProto(device_count={"CPU": 2},  # limit to num_cpu_core CPU usage
-                            inter_op_parallelism_threads=1,
-                            intra_op_parallelism_threads=1,
-                            log_device_placement=True)
+    tf_config = None
+    if CPU_ON and EVERY_CODE_CPU:
+        tf_config = tf.ConfigProto(device_count={"CPU": EVERY_CODE_CPU},  # limit to num_cpu_core CPU usage
+                                   inter_op_parallelism_threads=1,
+                                   intra_op_parallelism_threads=1,
+                                   log_device_placement=True)
 
     if w > 0 and h > 0:
-        # e = TfPoseEstimator(get_graph_path(args.model), target_size=(w, h), tf_config=config)
-        e = TfPoseEstimator(get_graph_path(args.model), target_size=(w, h))
+        e = TfPoseEstimator(get_graph_path(args.model), target_size=(w, h), tf_config=tf_config)
     else:
-        e = TfPoseEstimator(get_graph_path(args.model), target_size=(432, 368))
+        e = TfPoseEstimator(get_graph_path(args.model), target_size=(432, 368), tf_config=tf_config)
     logger.debug('cam read+')
     cam = cv2.VideoCapture(path)
     last_person_num = 0
     fps = cam.get(cv2.CAP_PROP_FPS)
-    i = 1
-    print('what is：', cam.isOpened())
+    print('Video url is：', cam.isOpened())
     logger.debug('FPS:{}'.format(fps))
     while cam.isOpened():
         ret_val, image = cam.read()
-        # logger.debug('This is  {}'.format(i))
-        # # if i % fps == 0:
-        # logger.debug('Processing is {}'.format(i))
         image2 = image
         logger.debug('image process+')
         try:
-            image = cv2.resize(image, (0, 0), fx=0.7, fy=0.7, interpolation=cv2.INTER_CUBIC)
+            image = cv2.resize(image, (0, 0), fx=TIMES, fy=TIMES, interpolation=cv2.INTER_CUBIC)
             humans = e.inference(image, resize_to_default=(w > 0 and h > 0), upsample_size=args.resize_out_ratio)
             logger.debug('postprocess+')
-            image, person_num, is_fall = TfPoseEstimator.draw_humans(image2, humans, imgcopy=False, video_name='video1')
+            image, person_num, is_fall = TfPoseEstimator.draw_humans(image2, humans, imgcopy=False)
             if person_num == 0:
                 logger.debug('Now people is 0,sleep 5 second')
                 time.sleep(5)
                 continue
             now = time.strftime('%Y.%m.%d %H:%M:%S ', time.localtime(time.time()))
             if last_person_num != person_num:
-                logger.debug('Change ! Now address : {} , Time : {} , Peopel : {}'.format(name, now, person_num))
-                save_to_kafka(now, person_num, is_fall, name)
-            logger.debug('Now address : {} , Time : {} , Peopel : {}'.format(name, now, person_num))
+                logger.debug('Change ! Now address : {} , Time : {} , Peopel : {}'.format(path, now, person_num))
+                if producer:
+                    save_to_kafka(now, person_num, is_fall, path, producer)
+            logger.debug('Now address : {} , Time : {} , Peopel : {}'.format(path, now, person_num))
             logger.debug('finished+')
             last_person_num = person_num
         except Exception as e:
             logger.error(e)
             logger.error('No video')
-            logger.error('Now address : {}'.format(name))
+            logger.error('Now address : {}'.format(path))
             logger.error('No video, This is restarting')
-        # i = i + 1
     else:
+        logger.error('Video url is bad, url:{}'.format(path))
         logger.error('This is restarting')
-        main(name, path)
+        main(path, producer)
 
 
 def start():
+    producer = None
+    if KAFKA_ON:
+        producer = KafkaProducer(bootstrap_servers=IP_PORT)
     video_mes = VIDEO_NAME
-    for name, path in video_mes.items():
-        t = threading.Thread(target=main, args=(name, path))
-        # t = Process(target=main, args=(name, path))
+    if ENVIRO and os.environ[DOCKER_ID]:
+        video_mes = video_mes[
+                    int(os.environ[DOCKER_ID]) * PROCESS_NUM - PROCESS_NUM:int(os.environ[DOCKER_ID]) * PROCESS_NUM]
+    for path in video_mes:
+        t = threading.Thread(target=main, args=(path, producer))
         t.start()
 
 

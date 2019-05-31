@@ -1,8 +1,21 @@
-VIDEO_NAME = {
-    'video_name_1': 'rtmp://10.10.6.210:11936/live/3_fps',
-    # 'video_name_2': 'rtmp://115.236.15.162:19335/live/1321',
-    # 'video_name_3': './etcs/test3.mp4',
-}
-IMAGE_NAME = "./images/timg.jpg"
-IP_PORT = "10.10.1.9:9092"
+VIDEO_NAME = [""]
+
+# kafka配置
+KAFKA_ON = False
+IP_PORT = ""
+# kafka 消息配置
 TOPIC = "TOPIC_IMAGE_PERSON_RECON"
+KEY = 'Pose'
+PARTITION = 0
+
+# CPU 配置
+CPU_ON = True
+EVERY_CODE_CPU = 2
+
+# 图像缩放
+TIMES = 0.7
+
+# 每台电脑docker 标识
+ENVIRO = False
+DOCKER_ID = None
+PROCESS_NUM = 3
