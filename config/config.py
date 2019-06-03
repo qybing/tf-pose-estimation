@@ -9,7 +9,7 @@ KEY = 'Pose'
 PARTITION = 0
 
 # CPU 配置
-CPU_ON = True
+CPU_ON = False
 EVERY_CODE_CPU = 2
 
 # 图像缩放
@@ -18,6 +18,7 @@ TIMES = 0.7
 # 每台电脑docker 标识
 ENVIRO = False
 DOCKER_ID = None
+# 每台docker 处理的视频流几条
 PROCESS_NUM = 3
 
 # 休息时间 默认5秒
