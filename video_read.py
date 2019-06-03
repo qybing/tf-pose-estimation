@@ -9,7 +9,7 @@ import cv2
 from kafka import KafkaProducer
 
 from config.config import VIDEO_NAME, IP_PORT, TOPIC, KEY, PARTITION, KAFKA_ON, CPU_ON, EVERY_CODE_CPU, TIMES, \
-    DOCKER_ID, PROCESS_NUM, ENVIRO
+    DOCKER_ID, PROCESS_NUM, ENVIRO, SLEEP_TIME
 from tf_pose.estimator import TfPoseEstimator
 from tf_pose.networks import get_graph_path, model_wh
 
@@ -40,6 +40,10 @@ def save_to_kafka(now, person_num, is_fall, url, producer):
     future = producer.send(TOPIC, key=KEY.encode('utf-8'), value=msg, partition=PARTITION)
     result = future.get(timeout=6)
     logger.debug(result)
+
+
+def save_img_to_DFS(image):
+    pass
 
 
 def main(path, producer):
@@ -84,12 +88,13 @@ def main(path, producer):
             image, person_num, is_fall = TfPoseEstimator.draw_humans(image2, humans, imgcopy=False)
             if person_num == 0:
                 logger.debug('Now people is 0,sleep 5 second')
-                time.sleep(5)
+                time.sleep(SLEEP_TIME)
                 continue
             now = time.strftime('%Y.%m.%d %H:%M:%S ', time.localtime(time.time()))
             if last_person_num != person_num:
                 logger.debug('Change ! Now address : {} , Time : {} , Peopel : {}'.format(path, now, person_num))
                 if producer:
+                    save_img_to_DFS(image)
                     save_to_kafka(now, person_num, is_fall, path, producer)
             logger.debug('Now address : {} , Time : {} , Peopel : {}'.format(path, now, person_num))
             logger.debug('finished+')
