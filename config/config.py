@@ -20,5 +20,5 @@ ENVIRO = False
 DOCKER_ID = None
 PROCESS_NUM = 3
 
-# 休息时间
+# 休息时间 默认5秒
 SLEEP_TIME = 5
