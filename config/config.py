@@ -17,7 +17,7 @@ TIMES = 0.7
 
 # 每台电脑docker 标识
 ENVIRO = False
-DOCKER_ID = None
+DOCKER_ID = 'TASK_SLOT'
 # 每台docker 处理的视频流几条
 PROCESS_NUM = 3
 
