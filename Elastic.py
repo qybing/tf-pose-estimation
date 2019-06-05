@@ -4,7 +4,7 @@ import uuid
 
 from elasticsearch import Elasticsearch
 
-from config.config import ES_HOST, ES_PORT, IS_USER, USER_NAME, PASSWORD, INDEX, DOC_TYPE
+from config.config import ES_HOST, ES_PORT, IS_USER, USER_NAME, PASSWORD, INDEX, DOC_TYPE, VERSION
 
 
 class Elastic(logging.Handler):
@@ -14,7 +14,7 @@ class Elastic(logging.Handler):
         else:
             self.es = Elasticsearch([{'host': ES_HOST, 'port': ES_PORT}], timeout=3600)
         self.ip = self.get_host_ip()
-        self.version = 1
+        self.version = VERSION
         logging.Handler.__init__(self)
 
     def get_host_ip(self):

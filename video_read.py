@@ -10,7 +10,7 @@ from kafka import KafkaProducer
 
 from Elastic import Elastic
 from config.config import VIDEO_NAME, IP_PORT, TOPIC, KEY, PARTITION, KAFKA_ON, CPU_ON, EVERY_CODE_CPU, TIMES, \
-    DOCKER_ID, PROCESS_NUM, ENVIRO, SLEEP_TIME
+    DOCKER_ID, PROCESS_NUM, ENVIRO, SLEEP_TIME, ES_ON
 from tf_pose.estimator import TfPoseEstimator
 from tf_pose.networks import get_graph_path, model_wh
 
@@ -26,8 +26,9 @@ formatter = logging.Formatter('[%(asctime)s] [%(name)s] [%(levelname)s] %(messag
 ch.setFormatter(formatter)
 logger.addHandler(ch)
 # logger.addHandler(file_log)
-handler = Elastic()
-logger.addHandler(handler)
+if ES_ON:
+    handler = Elastic()
+    logger.addHandler(handler)
 
 
 def save_to_kafka(now, person_num, is_fall, url, producer):

@@ -1,4 +1,6 @@
 VIDEO_NAME = [""]
+# 服务版本号
+VERSION = 1
 
 # kafka配置
 KAFKA_ON = False
@@ -25,6 +27,7 @@ PROCESS_NUM = 3
 SLEEP_TIME = 5
 
 # Elastic 设置 账号密码
+ES_ON = False
 ES_HOST = '10.10.1.9'
 ES_PORT = 9200
 IS_USER = False
