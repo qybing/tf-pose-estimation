@@ -23,3 +23,13 @@ PROCESS_NUM = 3
 
 # 休息时间 默认5秒
 SLEEP_TIME = 5
+
+# Elastic 设置 账号密码
+ES_HOST = '10.10.1.9'
+ES_PORT = 9200
+IS_USER = False
+USER_NAME = None
+PASSWORD = None
+# 索引，类型
+INDEX = 'tf-pose'
+DOC_TYPE = 'POSE'

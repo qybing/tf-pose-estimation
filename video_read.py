@@ -8,23 +8,26 @@ import tensorflow as tf
 import cv2
 from kafka import KafkaProducer
 
+from Elastic import Elastic
 from config.config import VIDEO_NAME, IP_PORT, TOPIC, KEY, PARTITION, KAFKA_ON, CPU_ON, EVERY_CODE_CPU, TIMES, \
     DOCKER_ID, PROCESS_NUM, ENVIRO, SLEEP_TIME
 from tf_pose.estimator import TfPoseEstimator
 from tf_pose.networks import get_graph_path, model_wh
 
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
-logger = logging.getLogger('TfPoseEstimator-WebCam')
+logger = logging.getLogger('tf-pose')
 logger.setLevel(logging.DEBUG)
-file_log = logging.FileHandler("TfPoseEstimator.log")
-file_log.setLevel(logging.DEBUG)
+# file_log = logging.FileHandler("TfPoseEstimator.log")
+# file_log.setLevel(logging.DEBUG)
 ch = logging.StreamHandler()
 ch.setLevel(logging.DEBUG)
 formatter = logging.Formatter('[%(asctime)s] [%(name)s] [%(levelname)s] %(message)s')
-file_log.setFormatter(formatter)
+# file_log.setFormatter(formatter)
 ch.setFormatter(formatter)
 logger.addHandler(ch)
-logger.addHandler(file_log)
+# logger.addHandler(file_log)
+handler = Elastic()
+logger.addHandler(handler)
 
 
 def save_to_kafka(now, person_num, is_fall, url, producer):
