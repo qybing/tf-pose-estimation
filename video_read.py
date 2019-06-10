@@ -7,7 +7,7 @@ import time
 import tensorflow as tf
 import cv2
 from kafka import KafkaProducer
-
+from fdfs_client.client import *
 from Elastic import Elastic
 from config.config import VIDEO_NAME, IP_PORT, TOPIC, KEY, PARTITION, KAFKA_ON, CPU_ON, EVERY_CODE_CPU, TIMES, \
     DOCKER_ID, PROCESS_NUM, ENVIRO, SLEEP_TIME, ES_ON
@@ -31,14 +31,15 @@ if ES_ON:
     logger.addHandler(handler)
 
 
-def save_to_kafka(now, person_num, is_fall, url, producer):
+def save_to_kafka(now, person_num, is_fall, url, producer, picture):
     msg = {
         "equipCode": 1,  # 摄像头编号
         "staffChangeTime": now,  # 人员识别时间
         "staffNum": person_num,  # 人员检测（数量）
         "videoUrl": url,  # 采集流url
         'apISource': '1',  # 模块识别码
-        "isFall": is_fall
+        "isFall": is_fall,
+        "picture": picture,
     }
     msg = json.dumps(msg).encode('utf-8')
     future = producer.send(TOPIC, key=KEY.encode('utf-8'), value=msg, partition=PARTITION)
@@ -47,7 +48,17 @@ def save_to_kafka(now, person_num, is_fall, url, producer):
 
 
 def save_img_to_DFS(image):
-    pass
+    client = Fdfs_client(get_tracker_conf("./fdfs_client.conf"))
+    cv2.imwrite("person.png", image)
+    try:
+        ret = client.upload_by_filename("person.png")
+        if 'successed' in ret.get['Status']:
+            logger.debug('Save the picture successfully')
+            os.remove('person.png')
+            return ret
+    except Exception as e:
+        logger.debug(e)
+        logger.debug('Save the picture failed')
 
 
 def main(path, producer):
@@ -98,8 +109,9 @@ def main(path, producer):
             if last_person_num != person_num:
                 logger.debug('Change ! Now address : {} , Time : {} , Peopel : {}'.format(path, now, person_num))
                 if producer:
-                    save_img_to_DFS(image)
-                    save_to_kafka(now, person_num, is_fall, path, producer)
+                    res = save_img_to_DFS(image)
+                    picture = str(res.get('Remote file_id'), encoding="utf-8") if res.get('Remote file_id') else ""
+                    save_to_kafka(now, person_num, is_fall, path, producer, picture)
             logger.debug('Now address : {} , Time : {} , Peopel : {}'.format(path, now, person_num))
             logger.debug('finished+')
             last_person_num = person_num
