@@ -47,8 +47,8 @@ def save_to_kafka(now, person_num, is_fall, url, producer, picture):
     logger.debug(result)
 
 
-def save_img_to_DFS(image):
-    client = Fdfs_client(get_tracker_conf("./fdfs_client.conf"))
+def save_img_to_dfs(image):
+    client = Fdfs_client(get_tracker_conf("config/fdfs_client.conf"))
     cv2.imwrite("person.png", image)
     try:
         ret = client.upload_by_filename("person.png")
@@ -109,7 +109,7 @@ def main(path, producer):
             if last_person_num != person_num:
                 logger.debug('Change ! Now address : {} , Time : {} , Peopel : {}'.format(path, now, person_num))
                 if producer:
-                    res = save_img_to_DFS(image)
+                    res = save_img_to_dfs(image)
                     picture = str(res.get('Remote file_id'), encoding="utf-8") if res.get('Remote file_id') else ""
                     save_to_kafka(now, person_num, is_fall, path, producer, picture)
             logger.debug('Now address : {} , Time : {} , Peopel : {}'.format(path, now, person_num))

@@ -1,4 +1,4 @@
-VIDEO_NAME = [""]
+VIDEO_NAME = ["rtmp://115.236.15.162:19335/live/1321"]
 # 服务版本号
 VERSION = 1
 
