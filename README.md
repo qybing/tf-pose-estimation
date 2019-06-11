@@ -19,6 +19,8 @@ $ docker run tf-pose
 Docker swarm 集群部署
 创建 docker config 文件
 ```bash
-$ docker config create pose config.py
-$ docker service create --name test --config source=mytest,target=/opt/code/tf-pose-estimation/config/config.py --replicas 3 qiaoyanbing/tf-pose:v5
+$ cd tf-pose-estimation/config
+$ docker config pose  config.py
+$ docker config fdfs_client fdfs_client.conf
+$ docker service create --name test --config source=pose,target=/opt/code/tf-pose-estimation/config/config.py --config source=fdfs_client,target=/opt/code/tf-pose-estimation/config/fdfs_client.conf --replicas 3 qiaoyanbing/tf-pose:v5
 ```

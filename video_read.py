@@ -6,6 +6,7 @@ import threading
 import time
 import tensorflow as tf
 import cv2
+import numpy as np
 from kafka import KafkaProducer
 from fdfs_client.client import *
 from Elastic import Elastic
@@ -49,12 +50,13 @@ def save_to_kafka(now, person_num, is_fall, url, producer, picture):
 
 def save_img_to_dfs(image):
     client = Fdfs_client(get_tracker_conf("config/fdfs_client.conf"))
-    cv2.imwrite("person.png", image)
+    image_encode = cv2.imencode(".jpg", image)[1]
+    data_encode = np.array(image_encode)
+    str_encode = data_encode.tostring()
     try:
-        ret = client.upload_by_filename("person.png")
+        ret = client.upload_by_buffer(str_encode)
         if 'successed' in ret.get['Status']:
             logger.debug('Save the picture successfully')
-            os.remove('person.png')
             return ret
     except Exception as e:
         logger.debug(e)
