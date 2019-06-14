@@ -34,7 +34,7 @@ if ES_ON:
 
 def save_to_kafka(now, person_num, is_fall, url, producer, picture):
     msg = {
-        "equipCode": 1,  # 摄像头编号
+        "equipCode": url,  # 摄像头编号
         "staffChangeTime": now,  # 人员识别时间
         "staffNum": person_num,  # 人员检测（数量）
         "picture": picture,  # 图像url
