@@ -1,6 +1,7 @@
-VIDEO_NAME = ["rtmp://115.236.15.162:19335/live/1321"]
+VIDEO_NAME = ["rtmp://10.10.6.210:11936/live/1"]
 # 服务版本号
 VERSION = 1
+APISOURCE = 'PERSON_SAFE'
 
 # kafka配置
 KAFKA_ON = False
@@ -13,6 +14,9 @@ PARTITION = 0
 # CPU 配置
 CPU_ON = False
 EVERY_CODE_CPU = 2
+
+# 设置调用那些GPU
+CUDA_VISIBLE_DEVICES = "0"
 
 # 图像缩放
 TIMES = 0.7

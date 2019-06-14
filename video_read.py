@@ -1,9 +1,7 @@
 import argparse
 import json
 import logging
-import os
 import threading
-import time
 import tensorflow as tf
 import cv2
 import numpy as np
@@ -11,11 +9,13 @@ from kafka import KafkaProducer
 from fdfs_client.client import *
 from Elastic import Elastic
 from config.config import VIDEO_NAME, IP_PORT, TOPIC, KEY, PARTITION, KAFKA_ON, CPU_ON, EVERY_CODE_CPU, TIMES, \
-    DOCKER_ID, PROCESS_NUM, ENVIRO, SLEEP_TIME, ES_ON
+    DOCKER_ID, PROCESS_NUM, ENVIRO, SLEEP_TIME, ES_ON, CUDA_VISIBLE_DEVICES, APISOURCE
 from tf_pose.estimator import TfPoseEstimator
 from tf_pose.networks import get_graph_path, model_wh
 
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
+os.environ["CUDA_DEVICE_ORDER"] = "PCI_BUS_ID"
+os.environ["CUDA_VISIBLE_DEVICES"] = CUDA_VISIBLE_DEVICES
 logger = logging.getLogger('tf-pose')
 logger.setLevel(logging.DEBUG)
 # file_log = logging.FileHandler("TfPoseEstimator.log")
@@ -37,10 +37,10 @@ def save_to_kafka(now, person_num, is_fall, url, producer, picture):
         "equipCode": 1,  # 摄像头编号
         "staffChangeTime": now,  # 人员识别时间
         "staffNum": person_num,  # 人员检测（数量）
+        "picture": picture,  # 图像url
         "videoUrl": url,  # 采集流url
-        'apISource': '1',  # 模块识别码
+        'apISource': APISOURCE,  # 模块识别码
         "isFall": is_fall,
-        "picture": picture,
     }
     msg = json.dumps(msg).encode('utf-8')
     future = producer.send(TOPIC, key=KEY.encode('utf-8'), value=msg, partition=PARTITION)
@@ -92,7 +92,7 @@ def main(path, producer):
     cam = cv2.VideoCapture(path)
     last_person_num = 0
     fps = cam.get(cv2.CAP_PROP_FPS)
-    print('Video url is：', cam.isOpened())
+    logger.debug('Video url is：{}'.format(cam.isOpened()))
     logger.debug('FPS:{}'.format(fps))
     while cam.isOpened():
         ret_val, image = cam.read()
