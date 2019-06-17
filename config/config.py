@@ -1,11 +1,12 @@
-VIDEO_NAME = ["rtmp://10.10.6.210:11936/live/1"]
+VIDEO_NAME = ["rtmp://10.10.6.213:11936/live/1", "rtmp://10.10.6.213:11936/live/2", "rtmp://10.10.6.213:11936/live/3"]
 # 服务版本号
 VERSION = 1
 APISOURCE = 'PERSON_SAFE'
 
 # kafka配置
 KAFKA_ON = False
-IP_PORT = "10.10.1.9:9092"
+KAFKA_IP = "10.10.6.213"
+KAFKA_PORT = "9092"
 # kafka 消息配置
 TOPIC = "TOPIC_IMAGE_PERSON_RECON"
 KEY = 'Pose'
@@ -32,7 +33,7 @@ SLEEP_TIME = 5
 
 # Elastic 设置 账号密码
 ES_ON = False
-ES_HOST = '10.10.1.9'
+ES_HOST = '10.10.6.213'
 ES_PORT = 9200
 IS_USER = False
 USER_NAME = None

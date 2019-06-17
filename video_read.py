@@ -8,7 +8,7 @@ import numpy as np
 from kafka import KafkaProducer
 from fdfs_client.client import *
 from Elastic import Elastic
-from config.config import VIDEO_NAME, IP_PORT, TOPIC, KEY, PARTITION, KAFKA_ON, CPU_ON, EVERY_CODE_CPU, TIMES, \
+from config.config import VIDEO_NAME, KAFKA_IP, KAFKA_PORT, TOPIC, KEY, PARTITION, KAFKA_ON, CPU_ON, EVERY_CODE_CPU, TIMES, \
     DOCKER_ID, PROCESS_NUM, ENVIRO, SLEEP_TIME, ES_ON, CUDA_VISIBLE_DEVICES, APISOURCE
 from tf_pose.estimator import TfPoseEstimator
 from tf_pose.networks import get_graph_path, model_wh
@@ -33,6 +33,17 @@ if ES_ON:
 
 
 def save_to_kafka(now, person_num, is_fall, url, producer, picture):
+    """
+    保存信息到kafka,字段含义如下
+    :param now:
+    :param person_num:
+    :param is_fall:
+    :param url:
+    :param producer:
+    :param picture:
+    :return:
+    """
+    logger.debug('Upload message save to kafka')
     msg = {
         "equipCode": url,  # 摄像头编号
         "staffChangeTime": now,  # 人员识别时间
@@ -42,6 +53,7 @@ def save_to_kafka(now, person_num, is_fall, url, producer, picture):
         'apISource': APISOURCE,  # 模块识别码
         "isFall": is_fall,
     }
+    print(msg)
     msg = json.dumps(msg).encode('utf-8')
     future = producer.send(TOPIC, key=KEY.encode('utf-8'), value=msg, partition=PARTITION)
     result = future.get(timeout=6)
@@ -49,13 +61,19 @@ def save_to_kafka(now, person_num, is_fall, url, producer, picture):
 
 
 def save_img_to_dfs(image):
+    """
+    保存图片到FastDFS分布式文件系统里
+    :param image: 图片矩阵
+    :return: 上传文件系统返回参数
+    """
+    logger.debug('Start to Save the picture')
     client = Fdfs_client(get_tracker_conf("config/fdfs_client.conf"))
     image_encode = cv2.imencode(".jpg", image)[1]
     data_encode = np.array(image_encode)
     str_encode = data_encode.tostring()
     try:
         ret = client.upload_by_buffer(str_encode)
-        if 'successed' in ret.get['Status']:
+        if 'successed' in ret.get('Status'):
             logger.debug('Save the picture successfully')
             return ret
     except Exception as e:
@@ -64,6 +82,12 @@ def save_img_to_dfs(image):
 
 
 def main(path, producer):
+    """
+    主函数, 图像识别
+    :param path: 视频流地址
+    :param producer: kafka是否开启
+    :return:
+    """
     parser = argparse.ArgumentParser(description='tf-pose-estimation realtime webcam')
     parser.add_argument('--camera', type=int, default=0)
     parser.add_argument('--resize', type=str, default='0x0',
@@ -92,7 +116,7 @@ def main(path, producer):
     cam = cv2.VideoCapture(path)
     last_person_num = 0
     fps = cam.get(cv2.CAP_PROP_FPS)
-    logger.debug('Video url is：{}'.format(cam.isOpened()))
+    logger.debug('Video url is: {}'.format(cam.isOpened()))
     logger.debug('FPS:{}'.format(fps))
     while cam.isOpened():
         ret_val, image = cam.read()
@@ -104,7 +128,7 @@ def main(path, producer):
             logger.debug('postprocess+')
             image, person_num, is_fall = TfPoseEstimator.draw_humans(image2, humans, imgcopy=False)
             if person_num == 0:
-                logger.debug('Now people is 0,sleep 5 second')
+                logger.debug('url:{}  Now people is 0,sleep 5 second'.format(path))
                 time.sleep(SLEEP_TIME)
                 continue
             now = time.strftime('%Y.%m.%d %H:%M:%S ', time.localtime(time.time()))
@@ -113,12 +137,13 @@ def main(path, producer):
                 if producer:
                     res = save_img_to_dfs(image)
                     picture = str(res.get('Remote file_id'), encoding="utf-8") if res.get('Remote file_id') else ""
+                    print(picture)
                     save_to_kafka(now, person_num, is_fall, path, producer, picture)
             logger.debug('Now address : {} , Time : {} , Peopel : {}'.format(path, now, person_num))
             logger.debug('finished+')
             last_person_num = person_num
-        except Exception as e:
-            logger.error(e)
+        except Exception as ex:
+            logger.error(ex)
             logger.error('No video')
             logger.error('Now address : {}'.format(path))
             logger.error('No video, This is restarting')
@@ -131,7 +156,8 @@ def main(path, producer):
 def start():
     producer = None
     if KAFKA_ON:
-        producer = KafkaProducer(bootstrap_servers=IP_PORT)
+        ip_port = '{}:{}'.format(KAFKA_IP, KAFKA_PORT)
+        producer = KafkaProducer(bootstrap_servers=ip_port)
     video_mes = VIDEO_NAME
     if ENVIRO and os.environ[DOCKER_ID]:
         video_mes = video_mes[
