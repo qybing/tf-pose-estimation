@@ -24,3 +24,10 @@ $ docker config pose  config.py
 $ docker config fdfs_client fdfs_client.conf
 $ docker service create --name test --config source=pose,target=/opt/code/tf-pose-estimation/config/config.py --config source=fdfs_client,target=/opt/code/tf-pose-estimation/config/fdfs_client.conf --replicas 3 qiaoyanbing/tf-pose:v5
 ```
+Docker 单机 tensorlfow-gpu调用
+```bash
+$ cd tf-pose-estimation/config
+$ docker config pose  config.py
+$ docker config fdfs_client fdfs_client.conf
+$ docker run --runtime=nvidia -it --rm --config source=pose,target=/opt/code/tf-pose-estimation/config/config.py --config source=fdfs_client,target=/opt/code/tf-pose-estimation/config/fdfs_client.conf qiaoyanbing/tf-pose:v2
+```
