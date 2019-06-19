@@ -1,0 +1,31 @@
+version: '3.3'
+services:
+  live_fps:
+    image: qiaoyanbing/tf-pose:v2
+    networks:
+      - live
+    configs:
+      - source: config1
+        target: /opt/code/tf-pose-estimation/config/config.py
+      - source: fdfs_client
+        target: /opt/code/tf-pose-estimation/config/fdfs_client.conf
+      - source: now_time
+        target: /etc/localtime
+    environment:
+      TASK_SLOT: "{{.Task.Slot}}"
+      SERVICE_NAME: "{{.Service.Name}}"
+      NODE_HOSTNAME: "{{.Node.Hostname}}"
+    deploy:
+      mode: replicated
+      replicas: 1
+
+configs:
+  config1:
+    file: /opt/code/tf-pose-estimation/config/config.py
+  fdfs_client:
+    file: /opt/code/tf-pose-estimation/config/fdfs_client.conf
+  now_time:
+    file: /etc/localtime
+networks:
+  live:
+    driver: overlay
